@@ -15,7 +15,7 @@ import scala.concurrent.{Await, Future}
 import models._
 
 
-object Main extends LazyLogging {
+object EntryPoint extends LazyLogging {
 
   implicit val db = Database.forConfig("gnat_hls")
   implicit val usersRepository = new UserRepository
@@ -46,7 +46,7 @@ object Main extends LazyLogging {
       .through(decoder[Task, User])
       .map(a => {
         println(a)
-        usersRepository.createOne(a)
+        Await.result(usersRepository.createOne(a), Duration.Inf)
       })
       .into(takeWhileI(_ => true))
       .unsafePerformSync
@@ -95,7 +95,7 @@ object Main extends LazyLogging {
 
   def main(args: Array[String]): Unit = {
     initTables()
-    Future { insertUsers }
+    insertUsers
     Thread.sleep(50000000)
   }
 }
