@@ -1,36 +1,45 @@
-import io.circe.streaming._
-import io.iteratee.scalaz.task._
-import scalaz.concurrent.Task
+package org.gnat.hls
 
 import java.io.File
-
-import com.typesafe.scalalogging.LazyLogging
-
-import slick.jdbc.PostgresProfile.api._
-import slick.jdbc.meta.MTable
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
-
-import models._
-
+import scalaz.concurrent.Task
+import com.typesafe.scalalogging.LazyLogging
+import io.circe.streaming._
+import io.iteratee.scalaz.task._
+import org.gnat.hls.models.{LocationRepository, UserRepository, VisitRepository}
+import org.gnat.hls.models.models._
+import org.gnat.hls.utils.TimeUtils._
+import slick.jdbc.PostgresProfile.api._
+import slick.jdbc.meta.MTable
 
 object EntryPoint extends LazyLogging {
 
   implicit val db = Database.forConfig("gnat_hls")
   implicit val usersRepository = new UserRepository
+  implicit val locationsRepository = new LocationRepository
+  implicit val visitsRepository = new VisitRepository
 
-  val tables = Map("users" -> usersRepository.userTableQuery)
+  val tables = Map("users" -> usersRepository.userTableQuery,
+                   "locations" -> locationsRepository.locationTableQuery,
+                   "visits" -> visitsRepository.visitTableQuery)
 
   def initTables(): Unit = {
     tables.keys.foreach(tableCreator)
   }
 
   def tableCreator(tableName: String): Unit = {
-    Await.result(db.run(MTable.getTables(tableName)).flatMap(matchedTables => if (matchedTables.isEmpty) {
-      logger.info(tableName + " table doesn't exist, creating...")
-      db.run(tables(tableName).schema.create)
-    } else Future.successful()).andThen { case _ => logger.info(tableName + " table check finished") }, Duration.Inf)
+    Await.result(
+      db.run(MTable.getTables(tableName))
+        .flatMap(matchedTables =>
+          if (matchedTables.isEmpty) {
+            logger.info(tableName + " table doesn't exist, creating...")
+            db.run(tables(tableName).schema.create)
+          } else Future.successful())
+        .andThen { case _ => logger.info(tableName + " table check finished") },
+      Duration.Inf
+    )
   }
 
   val arrayProcessor: (Array[Byte] => Array[Byte]) = a => {
@@ -70,7 +79,9 @@ object EntryPoint extends LazyLogging {
       .unsafePerformSync
 
   lazy val allFiles =
-    listFiles(new File("/temp/data/"))
+//    listFiles(new File("/temp/data/"))
+    listFiles(
+      new File("/Users/dragsa/Documents/HLC/hlcupdocs-master/data/FULL/data/"))
 
   lazy val insertUsers = allFiles
     .filter(f => f.getName.startsWith("users"))
@@ -94,8 +105,8 @@ object EntryPoint extends LazyLogging {
     .unsafePerformSync
 
   def main(args: Array[String]): Unit = {
+    logger.info("started")
     initTables()
-    insertUsers
-    Thread.sleep(50000000)
+//    timeCounter(insertUsers, "insert all users")
   }
 }

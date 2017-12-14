@@ -1,35 +1,38 @@
+package org.gnat.hls.models
+
 import io.circe.Decoder
 import java.sql.Timestamp
+import slick.ast.BaseTypedType
+import slick.jdbc.JdbcType
+import slick.jdbc.PostgresProfile.api._
 
 package object models {
 
   //users "first_name": "Василий", "last_name": "Стамыканый", "birth_date": 196819200, "gender": "m", "id": 10057,
-  // "email": "tissefedhusytfe@yahoo.com"}
+  //      "email": "tissefedhusytfe@yahoo.com"}
 
   //locations {"distance": 84, "city": "Варинск", "place": "Парк", "id": 7628, "country": "Армения"}
 
   //visits {"user": 759, "location": 87, "visited_at": 1088011472, "id": 10000, "mark": 1}
 
-  trait Entity
   case class User(firstName: String,
                   lastName: String,
                   birthDate: Long,
                   gender: String,
                   email: String,
                   id: Int)
-      extends Entity
+
   case class Location(distance: Int,
                       city: String,
                       place: String,
                       country: String,
                       id: Int)
-      extends Entity
+
   case class Visit(user: Int,
                    location: Int,
                    visitedAt: Long,
                    mark: Int,
                    id: Int)
-      extends Entity
 
   object User {
     implicit val decodeUser: Decoder[User] = Decoder.instance(c =>
@@ -47,11 +50,11 @@ package object models {
     implicit val decodeLocation: Decoder[Location] = Decoder.instance(l =>
       for {
         d <- l.downField("distance").as[Int]
-        c <- l.downField("city").as[String]
         p <- l.downField("place").as[String]
-        c <- l.downField("country").as[String]
+        c <- l.downField("city").as[String]
+        co <- l.downField("country").as[String]
         id <- l.downField("id").as[Int]
-      } yield Location(d, c, p, c, id))
+      } yield Location(d, p, c, co, id))
   }
 
   object Visit {
@@ -65,11 +68,10 @@ package object models {
       } yield Visit(u, l, va, m, id))
   }
 
-  implicit def longToTimestampConverter(l: Long) = {
-    new Timestamp(l)
-  }
-
-  implicit def timestampToLongConverter(stamp: Timestamp) = {
-    stamp.getTime
+  implicit val longToTimestampMapper: JdbcType[Timestamp] with BaseTypedType[Timestamp] = {
+    MappedColumnType.base[Timestamp, Long](
+      (ts: Timestamp) => ts.getTime,
+      (l: Long) => new Timestamp(l)
+    )
   }
 }
