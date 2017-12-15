@@ -9,7 +9,7 @@ import com.typesafe.scalalogging.LazyLogging
 import io.circe.streaming._
 import io.iteratee.scalaz.task._
 import org.gnat.hls.models.{LocationRepository, UserRepository, VisitRepository}
-import org.gnat.hls.models.models._
+import org.gnat.hls.models._
 import org.gnat.hls.utils.TimeUtils._
 import slick.jdbc.PostgresProfile.api._
 import slick.jdbc.meta.MTable
@@ -79,9 +79,9 @@ object EntryPoint extends LazyLogging {
       .unsafePerformSync
 
   lazy val allFiles =
-//    listFiles(new File("/temp/data/"))
-    listFiles(
-      new File("/Users/dragsa/Documents/HLC/hlcupdocs-master/data/FULL/data/"))
+    listFiles(new File("/temp/data/"))
+//    listFiles(
+//      new File("/Users/dragsa/Documents/HLC/hlcupdocs-master/data/FULL/data/"))
 
   lazy val insertUsers = allFiles
     .filter(f => f.getName.startsWith("users"))

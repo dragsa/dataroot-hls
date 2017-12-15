@@ -3,7 +3,6 @@ package org.gnat.hls.models
 import slick.jdbc.PostgresProfile.api._
 import slick.lifted.Tag
 import scala.concurrent.Future
-import org.gnat.hls.models.models.Visit
 
 //case class Visit(user: Int,
 //                 location: Int,
@@ -25,14 +24,13 @@ final class VisitTable(tag: Tag) extends Table[Visit](tag, "visits") {
 
   def location = column[Int]("location")
 
-  //TODO Long to Timestamp?
+  //TODO do we need Long to Timestamp here?
   def visitedAt = column[Long]("visited_at")
 
   def mark = column[Int]("mark")
 
   def id = column[Int]("id", O.PrimaryKey, O.Unique)
 
-  import org.gnat.hls.models.models._
   def * =
     (user, location, visitedAt, mark, id) <> (Visit.apply _ tupled, Visit.unapply)
 

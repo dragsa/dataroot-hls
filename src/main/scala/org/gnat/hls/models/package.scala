@@ -1,4 +1,4 @@
-package org.gnat.hls.models
+package org.gnat.hls
 
 import io.circe.Decoder
 import java.sql.Timestamp

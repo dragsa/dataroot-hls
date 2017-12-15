@@ -3,7 +3,6 @@ package org.gnat.hls.models
 import slick.jdbc.PostgresProfile.api._
 import slick.lifted.Tag
 import scala.concurrent.Future
-import org.gnat.hls.models.models.Location
 
 //case class Location(distance: Int,
 //                    city: String,
@@ -32,7 +31,6 @@ final class LocationTable(tag: Tag)
 
   def id = column[Int]("id", O.PrimaryKey, O.Unique)
 
-  import org.gnat.hls.models.models._
   def * =
     (distance, place, city, country, id) <> (Location.apply _ tupled, Location.unapply)
 
