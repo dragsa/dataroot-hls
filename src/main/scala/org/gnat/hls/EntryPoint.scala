@@ -26,8 +26,8 @@ object EntryPoint extends LazyLogging {
                    "locations" -> locationsRepository.locationTableQuery,
                    "visits" -> visitsRepository.visitTableQuery)
 
-  val workingPath =
-    "/Users/dragsa/Documents/HLC/hlcupdocs-master/data/FULL/data_gnat/"
+  val workingPath = "/tmp/data/"
+//    "/Users/dragsa/Documents/HLC/hlcupdocs-master/data/FULL/data_gnat/"
 
   def initTables(): Unit = {
     tables.keys.foreach(tableCreator)

@@ -39,3 +39,5 @@ pubsub/target
 .idea
 
 project/project/
+docker/dataroot-hls-assembly-0.1.jar
+

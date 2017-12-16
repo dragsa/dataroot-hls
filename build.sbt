@@ -24,3 +24,28 @@ libraryDependencies ++= Seq(
   "com.typesafe.akka" %% "akka-http" % "10.0.11",
   "de.heikoseeberger" %% "akka-http-circe" % "1.18.0"
 )
+
+// no need for this, using plain assembly
+
+//enablePlugins(DockerPlugin)
+//
+//dockerfile in docker := {
+//  // The assembly task generates a fat JAR file
+//  val artifact: File = assembly.value
+//  val artifactTargetPath = s"/app/${artifact.name}"
+//
+//  new Dockerfile {
+//    from("dragsasgard/postgres_96")
+//    add(artifact, artifactTargetPath)
+//  }
+//}
+//
+//imageNames in docker := Seq(
+//  // Sets the latest tag
+//  ImageName(s"dragsasgard/dataroot_hls:latest")
+//)
+
+// just run "sbt assembly" to get fat jar in docker subfolder
+
+assemblyOutputPath in assembly := file(Option("docker/").getOrElse("") + "dataroot-hls-assembly-" + version.value + ".jar")
+
