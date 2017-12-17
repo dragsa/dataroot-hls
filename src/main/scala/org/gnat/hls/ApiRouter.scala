@@ -4,6 +4,7 @@ import scala.util.{Failure, Success, Try}
 import akka.http.scaladsl.model.StatusCodes
 import akka.http.scaladsl.server.Directives._
 import de.heikoseeberger.akkahttpcirce.FailFastCirceSupport
+import io.circe.{JsonNumber, JsonObject}
 import io.circe.syntax._
 
 //GET /<entity>/<id> для получения данных о сущности
@@ -20,6 +21,7 @@ trait ApiRouter extends HlsDatabase with FailFastCirceSupport {
           pathPrefix("new") {
             pathEnd {
               post {
+                // TODO call validation here
                 complete(s"POST to create $entityType")
               }
             }
@@ -65,19 +67,31 @@ trait ApiRouter extends HlsDatabase with FailFastCirceSupport {
                       entityType match {
                         case "users" =>
                           aggregation match {
-                            // TODO
+                            // TODO add filters!
                             case "visits" => {
-                              complete(
-                                s"$entityType $existingIdOrNew $aggregation requested")
+                              onSuccess(visitsRepository.getByUserId(parsedId)) {
+                                result =>
+                                  complete(JsonObject.fromMap(
+                                    Map("visits" -> result.asJson)))
+                              }
                             }
                             case _ => complete(StatusCodes.NotFound)
                           }
                         case "locations" =>
                           aggregation match {
-                            // TODO
+                            // TODO add filters!
                             case "avg" => {
-                              complete(
-                                s"$entityType $existingIdOrNew $aggregation requested")
+                              onSuccess(locationsRepository.getById(parsedId)) {
+                                case Some(_) =>
+                                  onSuccess(visitsRepository
+                                    .getLocationMarksById(parsedId)) { result =>
+                                    complete(JsonObject.fromMap(
+                                      Map("avg" -> result.asJson)))
+                                  }
+                                case None =>
+                                  complete(JsonObject.fromMap(
+                                    Map("avg" -> JsonNumber.fromDecimalStringUnsafe("0.0").asJson)))
+                              }
                             }
                             case _ => complete(StatusCodes.NotFound)
                           }

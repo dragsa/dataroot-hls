@@ -62,6 +62,16 @@ class VisitRepository(implicit db: Database) {
     db.run(visitTableQuery.filter(_.id === _id).result.headOption)
   }
 
+  def getByUserId(_userId: Int): Future[Seq[Visit]] = {
+    db.run(visitTableQuery.filter(visit => visit.user === _userId).result)
+  }
+
+  def getLocationMarksById(_locationId: Int) = {
+    // TODO lift to double!
+//    db.run(visitTableQuery.filter(_.location === _locationId).map(_.mark.asColumnOf[Double]).avg.result)
+    db.run(visitTableQuery.filter(_.location === _locationId).map(_.mark).avg.result)
+  }
+
   def getAll: Future[Seq[Visit]] = {
     db.run(visitTableQuery.result)
   }
