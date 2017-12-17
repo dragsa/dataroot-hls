@@ -15,7 +15,7 @@ import org.gnat.hls.utils.Utils._
 import slick.jdbc.PostgresProfile.api._
 import slick.jdbc.meta.MTable
 
-object EntryPoint extends LazyLogging {
+trait HlsDatabase extends LazyLogging {
 
   implicit val db = Database.forConfig("gnat_hls")
   implicit val usersRepository = new UserRepository
@@ -95,10 +95,11 @@ object EntryPoint extends LazyLogging {
           }))
       .unsafePerformSync
 
-  val allFiles = {
+  lazy val allFiles = {
     zippedFolderExtractor(workingPath)
     listFiles(new File(workingPath))
-    //    listFiles(new File("/temp/data/"))
+      .into(takeWhileI(_ => true))
+      .unsafePerformSync
   }
 
   def insertUsers =
@@ -106,12 +107,10 @@ object EntryPoint extends LazyLogging {
       allFiles
         .filter(f =>
           f.getName.startsWith("users") && f.getName.endsWith(".json"))
-        .map(ff => {
+        .foreach(ff => {
           logger.info("processing input file " + ff)
           userDecoder(ff.getAbsolutePath)
         })
-        .into(takeWhileI(_ => true))
-        .unsafePerformSync
     }
 
   def insertLocations =
@@ -119,12 +118,10 @@ object EntryPoint extends LazyLogging {
       allFiles
         .filter(f =>
           f.getName.startsWith("locations") && f.getName.endsWith(".json"))
-        .map(ff => {
+        .foreach(ff => {
           logger.info("processing input file " + ff)
           locationDecoder(ff.getAbsolutePath)
         })
-        .into(takeWhileI(_ => true))
-        .unsafePerformSync
     }
 
   def insertVisits =
@@ -132,21 +129,17 @@ object EntryPoint extends LazyLogging {
       allFiles
         .filter(f =>
           f.getName.startsWith("visits") && f.getName.endsWith(".json"))
-        .map(ff => {
+        .foreach(ff => {
           logger.info("processing input file " + ff)
           visitDecoder(ff.getAbsolutePath)
         })
-        .into(takeWhileI(_ => true))
-        .unsafePerformSync
     }
 
-  def main(args: Array[String]): Unit = {
-    logger.info("started")
-    initTables()
-//    timeCounter(insertUsers, "insert all users")
+  def initDatabase {
+    logger.info("initialization started")
+    initTables
     insertUsers
     insertLocations
     insertVisits
-    Thread.sleep(6000000)
   }
 }

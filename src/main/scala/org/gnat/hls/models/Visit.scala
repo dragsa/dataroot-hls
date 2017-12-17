@@ -58,8 +58,8 @@ class VisitRepository(implicit db: Database) {
         .update(visit))
   }
 
-  def getById(visitId: Int): Future[Option[Visit]] = {
-    db.run(visitTableQuery.filter(_.id === visitId).result.headOption)
+  def getById(_id: Int): Future[Option[Visit]] = {
+    db.run(visitTableQuery.filter(_.id === _id).result.headOption)
   }
 
   def getAll: Future[Seq[Visit]] = {

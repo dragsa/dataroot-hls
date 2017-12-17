@@ -1,7 +1,8 @@
 package org.gnat.hls
 
-import io.circe.Decoder
+import io.circe.{Decoder, Encoder}
 import java.sql.Timestamp
+import io.circe.generic.semiauto.deriveEncoder
 import slick.ast.BaseTypedType
 import slick.jdbc.JdbcType
 import slick.jdbc.PostgresProfile.api._
@@ -44,6 +45,7 @@ package object models {
         e <- c.downField("email").as[String]
         id <- c.downField("id").as[Int]
       } yield User(fn, ln, bd, g, e, id))
+    implicit val userEncoder: Encoder[User] = deriveEncoder[User]
   }
 
   object Location {
@@ -55,6 +57,7 @@ package object models {
         co <- l.downField("country").as[String]
         id <- l.downField("id").as[Int]
       } yield Location(d, p, c, co, id))
+    implicit val locationEncoder: Encoder[Location] = deriveEncoder[Location]
   }
 
   object Visit {
@@ -66,6 +69,7 @@ package object models {
         m <- v.downField("mark").as[Int]
         id <- v.downField("id").as[Int]
       } yield Visit(u, l, va, m, id))
+    implicit val visitEncoder: Encoder[Visit] = deriveEncoder[Visit]
   }
 
   implicit val longToTimestampMapper: JdbcType[Timestamp] with BaseTypedType[Timestamp] = {
