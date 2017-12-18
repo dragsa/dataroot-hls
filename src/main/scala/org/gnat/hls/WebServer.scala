@@ -12,13 +12,12 @@ object WebServer extends App with ApiRouter with LazyLogging {
   implicit val materializer = ActorMaterializer()
   implicit val executionContext = system.dispatcher
 
-  //  checkDatabase()
-
   val bindingFuture = Http().bindAndHandle(route, "0.0.0.0", 8080)
 
-//  initDatabase
-  logger.info("Started server")
-  StdIn.readLine() // let it run until user presses return
+  initDatabase
+
+  logger.info("Started server, press enter to stop")
+  StdIn.readLine()
   bindingFuture
     .flatMap(_.unbind())
     .onComplete(_ => system.terminate())
