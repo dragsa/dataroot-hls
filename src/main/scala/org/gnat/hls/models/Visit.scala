@@ -1,5 +1,6 @@
 package org.gnat.hls.models
 
+import java.sql.Timestamp
 import slick.jdbc.PostgresProfile.api._
 import slick.lifted.Tag
 import scala.concurrent.Future
@@ -24,8 +25,7 @@ final class VisitTable(tag: Tag) extends Table[Visit](tag, "visits") {
 
   def location = column[Int]("location")
 
-  //TODO do we need Long to Timestamp here?
-  def visitedAt = column[Long]("visited_at")
+  def visitedAt = column[Timestamp]("visited_at")
 
   def mark = column[Int]("mark")
 

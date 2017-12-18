@@ -1,11 +1,9 @@
 package org.gnat.hls
 
-import io.circe.{Decoder, Encoder}
+import io.circe.{Decoder, Encoder, Json}
 import java.sql.Timestamp
+import java.time.{LocalDateTime, ZoneOffset}
 import io.circe.generic.semiauto.deriveEncoder
-import slick.ast.BaseTypedType
-import slick.jdbc.JdbcType
-import slick.jdbc.PostgresProfile.api._
 
 package object models {
 
@@ -18,7 +16,7 @@ package object models {
 
   case class User(firstName: String,
                   lastName: String,
-                  birthDate: Long,
+                  birthDate: Timestamp,
                   gender: String,
                   email: String,
                   id: Int)
@@ -31,11 +29,16 @@ package object models {
 
   case class Visit(user: Int,
                    location: Int,
-                   visitedAt: Long,
+                   visitedAt: Timestamp,
                    mark: Int,
                    id: Int)
 
+  // TODO fix this
+  implicit def longToTimestampConverter(l: Long) = Timestamp.valueOf(LocalDateTime.ofEpochSecond(l, 0, ZoneOffset.UTC))
+  implicit def timestampToLongConverter(ts: Timestamp) = ts.getTime
+
   object User {
+
     implicit val decodeUser: Decoder[User] = Decoder.instance(c =>
       for {
         fn <- c.downField("first_name").as[String]
@@ -45,7 +48,17 @@ package object models {
         e <- c.downField("email").as[String]
         id <- c.downField("id").as[Int]
       } yield User(fn, ln, bd, g, e, id))
-    implicit val userEncoder: Encoder[User] = deriveEncoder[User]
+
+    implicit val userEncoder = new Encoder[User] {
+      final def apply(u: User): Json = Json.obj(
+        ("first_name", Json.fromString(u.firstName)),
+        ("last_name", Json.fromString(u.lastName)),
+        ("birth_date", Json.fromLong(u.birthDate)),
+        ("gender", Json.fromString(u.gender)),
+        ("rating", Json.fromString(u.email)),
+        ("id", Json.fromInt(u.id))
+      )
+    }
   }
 
   object Location {
@@ -69,13 +82,15 @@ package object models {
         m <- v.downField("mark").as[Int]
         id <- v.downField("id").as[Int]
       } yield Visit(u, l, va, m, id))
-    implicit val visitEncoder: Encoder[Visit] = deriveEncoder[Visit]
-  }
 
-  implicit val longToTimestampMapper: JdbcType[Timestamp] with BaseTypedType[Timestamp] = {
-    MappedColumnType.base[Timestamp, Long](
-      (ts: Timestamp) => ts.getTime,
-      (l: Long) => new Timestamp(l)
-    )
+    implicit val visitEncoder = new Encoder[Visit] {
+      final def apply(v: Visit): Json = Json.obj(
+        ("user", Json.fromInt(v.user)),
+        ("location", Json.fromInt(v.location)),
+        ("visited_at", Json.fromLong(v.visitedAt)),
+        ("mark", Json.fromInt(v.mark)),
+        ("id", Json.fromInt(v.id))
+      )
+    }
   }
 }

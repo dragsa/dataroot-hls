@@ -1,5 +1,6 @@
 package org.gnat.hls.models
 
+import java.sql.Timestamp
 import slick.jdbc.PostgresProfile.api._
 import slick.lifted.Tag
 import scala.concurrent.Future
@@ -26,8 +27,7 @@ final class UserTable(tag: Tag) extends Table[User](tag, "users") {
 
   def lastName = column[String]("last_name", O.Length(50))
 
-  //TODO do we need Long to Timestamp here?
-  def birthDate = column[Long]("birth_date")
+  def birthDate = column[Timestamp]("birth_date")
 
   def gender = column[String]("gender", O.Length(1))
 
