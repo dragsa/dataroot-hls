@@ -33,9 +33,9 @@ package object models {
                    mark: Int,
                    id: Int)
 
-  // TODO fix this
-  implicit def longToTimestampConverter(l: Long) = Timestamp.valueOf(LocalDateTime.ofEpochSecond(l, 0, ZoneOffset.UTC))
-  implicit def timestampToLongConverter(ts: Timestamp) = ts.getTime
+  // TODO does it really work properly?
+  implicit def longToTimestampConverter(l: Long) = new Timestamp(l * 1000)
+  implicit def timestampToLongConverter(ts: Timestamp) = ts.getTime / 1000
 
   object User {
 
