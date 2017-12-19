@@ -42,6 +42,7 @@ object VisitTable {
 
 class VisitRepository(implicit db: Database) {
   val visitTableQuery = VisitTable.table
+  val userTableQuery = UserTable.table
 
   def createOne(visit: Visit): Future[Visit] = {
     db.run(visitTableQuery returning visitTableQuery += visit)
@@ -67,10 +68,34 @@ class VisitRepository(implicit db: Database) {
   }
 
   def getLocationMarksById(_locationId: Int) = {
-    // TODO lift to double!
-//    db.run(visitTableQuery.filter(_.location === _locationId).map(_.mark.asColumnOf[Double]).avg.result)
-    db.run(visitTableQuery.filter(_.location === _locationId).map(_.mark).avg.result)
+    db.run(
+      visitTableQuery
+        .filter(_.location === _locationId)
+        .map(_.mark)
+        .avg
+        .asColumnOf[Option[Double]]
+        .result)
   }
+
+  def getLocationMarksByIdWithFilter(_locationId: Int,
+                                     _filter: Map[String, Any]) = {
+    db.run(
+      (visitTableQuery join userTableQuery on (_.user === _.id))
+        .map {
+          case (v, u) => (v.id, v.location, v.mark, u.id, u.birthDate, u.gender)
+        }
+        .filter {
+          case (vid, location, mark, uid, birthDate, gender) =>
+            location === _locationId
+        }
+        .map { case (_, _, mark, _, _, _) => mark }
+        .avg
+        .asColumnOf[Option[Double]]
+        .result)
+  }
+
+//  (repoTrip.tripTableQuery join repoTrip.passInTripTableQuery on (_.tripNumber === _.tripNumber))
+//    .map { case (t, p) => (t.companyId, p.passengerId) }
 
   def getAll: Future[Seq[Visit]] = {
     db.run(visitTableQuery.result)

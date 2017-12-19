@@ -14,7 +14,7 @@ object WebServer extends App with ApiRouter with LazyLogging {
 
   val bindingFuture = Http().bindAndHandle(route, "0.0.0.0", 8080)
 
-  initDatabase
+//  initDatabase
 
   logger.info("Started server, press enter to stop")
   StdIn.readLine()

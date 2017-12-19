@@ -66,6 +66,11 @@ trait ApiRouter extends HlsDatabase with FailFastCirceSupport {
                     get {
                       entityType match {
                         case "users" =>
+//  GET-параметры:
+//  fromDate - посещения с visited_at > fromDate
+//  toDate - посещения до visited_at < toDate
+//  country - название страны, в которой находятся интересующие достопримечательности
+//  toDistance - возвращать только те места, у которых расстояние от города меньше этого параметра
                           aggregation match {
                             // TODO add filters!
                             case "visits" => {
@@ -78,22 +83,55 @@ trait ApiRouter extends HlsDatabase with FailFastCirceSupport {
                             case _ => complete(StatusCodes.NotFound)
                           }
                         case "locations" =>
-                          aggregation match {
-                            // TODO add filters!
-                            case "avg" => {
-                              onSuccess(locationsRepository.getById(parsedId)) {
-                                case Some(_) =>
-                                  onSuccess(visitsRepository
-                                    .getLocationMarksById(parsedId)) { result =>
-                                    complete(JsonObject.fromMap(
-                                      Map("avg" -> result.asJson)))
+//  GET-параметры:
+//  fromDate - учитывать оценки только с visited_at > fromDate
+//  toDate - учитывать оценки только до visited_at < toDate
+//  fromAge - учитывать только путешественников, у которых возраст (считается от текущего timestamp) строго больше этого параметра
+//  toAge - учитывать только путешественников, у которых возраст (считается от текущего timestamp) строго меньше этого параметра
+//  gender - учитывать оценки только мужчин или женщин
+                          parameters('fromDate.?,
+                                     'toDate.?,
+                                     'fromAge.?,
+                                     'toAge.?,
+                                     'gender.?) {
+                            (fromDate, toDate, fromAge, toAge, gender) =>
+                              // TODO maybe?
+                              // validate(locationAvgParametersListValidation(fromDate, toDate, fromAge, toAge, gender), "wrong data")
+                              aggregation match {
+                                // TODO add filters!
+                                case "avg" => {
+                                  onSuccess(
+                                    locationsRepository.getById(parsedId)) {
+                                    case Some(_) =>
+                                      val filter =
+                                        locationAvgParametersListValidation(
+                                          fromDate,
+                                          toDate,
+                                          fromAge,
+                                          toAge,
+                                          gender)
+                                      onSuccess(visitsRepository
+                                        .getLocationMarksById(parsedId)) {
+                                        case Some(avg) =>
+                                          complete(
+                                            JsonObject.fromMap(
+                                              Map("avg" -> JsonNumber
+                                                .fromDecimalStringUnsafe(
+                                                  "%.5f".format(avg))
+                                                .asJson)))
+                                        case None =>
+                                          complete(
+                                            JsonObject.fromMap(
+                                              Map("avg" -> JsonNumber
+                                                .fromDecimalStringUnsafe("0.0")
+                                                .asJson)))
+                                      }
+                                    case None =>
+                                      complete(StatusCodes.NotFound)
                                   }
-                                case None =>
-                                  complete(JsonObject.fromMap(
-                                    Map("avg" -> JsonNumber.fromDecimalStringUnsafe("0.0").asJson)))
+                                }
+                                case _ => complete(StatusCodes.NotFound)
                               }
-                            }
-                            case _ => complete(StatusCodes.NotFound)
                           }
                       }
                     }
@@ -108,4 +146,12 @@ trait ApiRouter extends HlsDatabase with FailFastCirceSupport {
 
   // TODO
   private def jsonBodyValidation[T] = ???
+
+  private def locationAvgParametersListValidation(filters: Option[String]*) = {
+    (List("fromDate", "toDate", "fromAge", "toAge", "gender") zip filters.toList)
+      .filter(_._2.isDefined)
+      .toMap
+      .map { case (key, opt) => key -> opt.get }
+  }
+
 }
