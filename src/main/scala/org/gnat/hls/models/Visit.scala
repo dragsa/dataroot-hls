@@ -78,7 +78,7 @@ class VisitRepository(implicit db: Database) {
   }
 
   def getLocationMarksByIdWithFilter(_locationId: Int,
-                                     _filter: Map[String, Any]) = {
+                                     _filter: Map[String, String]) = {
     db.run(
       (visitTableQuery join userTableQuery on (_.user === _.id))
         .map {
@@ -86,6 +86,7 @@ class VisitRepository(implicit db: Database) {
         }
         .filter {
           case (vid, location, mark, uid, birthDate, gender) =>
+            // TODO apply filter here, MaybeFilter concept?
             location === _locationId
         }
         .map { case (_, _, mark, _, _, _) => mark }
@@ -94,10 +95,9 @@ class VisitRepository(implicit db: Database) {
         .result)
   }
 
-//  (repoTrip.tripTableQuery join repoTrip.passInTripTableQuery on (_.tripNumber === _.tripNumber))
-//    .map { case (t, p) => (t.companyId, p.passengerId) }
-
   def getAll: Future[Seq[Visit]] = {
     db.run(visitTableQuery.result)
   }
+
+  def buildFilter = ???
 }
