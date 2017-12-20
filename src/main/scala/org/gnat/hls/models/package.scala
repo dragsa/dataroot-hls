@@ -4,6 +4,7 @@ import io.circe.{Decoder, Encoder, Json}
 import java.sql.Timestamp
 import java.time.{LocalDateTime, ZoneOffset}
 import io.circe.generic.semiauto.deriveEncoder
+import slick.lifted.CanBeQueryCondition
 
 package object models {
 
@@ -32,6 +33,22 @@ package object models {
                    visitedAt: Timestamp,
                    mark: Int,
                    id: Int)
+
+  // no idea how and why
+  // case class MaybeFilter[X, Y, C[_]](query: slick.lifted.Query[X, Y, C]) {
+  //  def filter[T,R:CanBeQueryCondition](data: Option[T])(f: T => X => R) = {
+  //    data.map(v => MaybeFilter(query.withFilter(f(v)))).getOrElse(this)
+  //  }
+  // }
+  //  def find(id: Option[Int], createdMin: Option[Date], createdMax: Option[Date], modifiedMin: Option[Date], modifiedMax: Option[Date]) = {
+  //    MaybeFilter(someTable)
+  //      .filter(id)(v => d => d.id === v)
+  //      .filter(createdMin)(v => d => d.created >= v)
+  //      .filter(createdMax)(v => d => d.created <= v)
+  //      .filter(modifiedMin)(v => d => d.modified >= v)
+  //      .filter(modifiedMax)(v => d => d.modified <= v)
+  //      .query
+  //  }
 
   // TODO does it really work properly?
   implicit def longToTimestampConverter(l: Long) = new Timestamp(l * 1000)

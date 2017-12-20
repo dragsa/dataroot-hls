@@ -103,20 +103,12 @@ trait ApiRouter extends HlsDatabase with FailFastCirceSupport {
                                   onSuccess(
                                     locationsRepository.getById(parsedId)) {
                                     case Some(_) =>
-                                      val filter =
-                                        locationAvgParametersListValidation(
-                                          fromDate,
-                                          toDate,
-                                          fromAge,
-                                          toAge,
-                                          gender)
-                                      logger.debug("applying filter: " + filter)
                                       onSuccess(
                                         visitsRepository
-//                                        .getLocationMarksById(parsedId)) {
+                                        // TODO add parsing to relevant type
                                           .getLocationMarksByIdWithFilter(
                                             parsedId,
-                                            filter)) {
+                                          None, None, None, None, gender)) {
                                         case Some(avg) =>
                                           complete(
                                             JsonObject.fromMap(
@@ -154,7 +146,6 @@ trait ApiRouter extends HlsDatabase with FailFastCirceSupport {
 
   private def locationAvgParametersListValidation(filters: Option[String]*) = {
     (List("fromDate", "toDate", "fromAge", "toAge", "gender") zip filters.toList)
-//      .filter(_._2.isDefined)
       .toMap
       .map {
         case (key, opt) =>
