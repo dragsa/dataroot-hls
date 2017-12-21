@@ -83,12 +83,6 @@ trait ApiRouter extends HlsDatabase with FailFastCirceSupport {
                             case _ => complete(StatusCodes.NotFound)
                           }
                         case "locations" =>
-//  GET-параметры:
-//  fromDate - учитывать оценки только с visited_at > fromDate
-//  toDate - учитывать оценки только до visited_at < toDate
-//  fromAge - учитывать только путешественников, у которых возраст (считается от текущего timestamp) строго больше этого параметра
-//  toAge - учитывать только путешественников, у которых возраст (считается от текущего timestamp) строго меньше этого параметра
-//  gender - учитывать оценки только мужчин или женщин
                           parameters('fromDate.?,
                                      'toDate.?,
                                      'fromAge.?,

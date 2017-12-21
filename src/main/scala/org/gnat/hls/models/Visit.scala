@@ -1,6 +1,8 @@
 package org.gnat.hls.models
 
 import java.sql.Timestamp
+import java.time._
+import java.time.temporal.ChronoField
 import slick.jdbc.PostgresProfile.api._
 import slick.lifted.Tag
 import scala.concurrent.Future
@@ -78,30 +80,49 @@ class VisitRepository(implicit db: Database) {
   }
 
   def getLocationMarksByIdWithFilter(_locationId: Int,
-                                     _fromAge: Option[Int],
-                                     _toAge: Option[Int],
                                      _fromDate: Option[Long],
                                      _toDate: Option[Long],
+                                     _fromAge: Option[Int],
+                                     _toAge: Option[Int],
                                      _gender: Option[String]) = {
     db.run {
-      val initialQuery =
-        (visitTableQuery join userTableQuery on (_.user === _.id))
-          .map {
-            case (v, u) =>
-              (v.id, v.location, v.visitedAt, v.mark, u.id, u.birthDate, u.gender)
-          }
-          // TODO apply filter here, MaybeFilter concept?
-          .filter(_._2 === _locationId)
-
-      //        .filter(_._6 === _gender)
-      val finalQuery = initialQuery
-        .map { case (_, _, _, mark, _, _, _) => mark }
+      (visitTableQuery join userTableQuery on (_.user === _.id))
+        .map {
+          case (v, u) =>
+            (v.id, v.location, v.visitedAt, v.mark, u.birthDate, u.gender)
+        }
+        // TODO apply filter here more concise, MaybeFilter concept?
+        //  GET-параметры:
+        //  fromDate - учитывать оценки только с visited_at > fromDate
+        //  toDate - учитывать оценки только до visited_at < toDate
+        //  fromAge - учитывать только путешественников, у которых возраст (считается от текущего timestamp) строго больше этого параметра
+        //  toAge - учитывать только путешественников, у которых возраст (считается от текущего timestamp) строго меньше этого параметра
+        //  gender - учитывать оценки только мужчин или женщин
+        .filter(_._2 === _locationId)
+        .filter(
+          f =>
+            _fromDate
+              .map(fd => f._3 > longToTimestampConverter(fd))
+              .getOrElse(slick.lifted.LiteralColumn(true)) &&
+              _toDate
+                .map(td => f._3 < longToTimestampConverter(td))
+                .getOrElse(slick.lifted.LiteralColumn(true))
+              &&
+//              _fromAge
+//                .map(fa => f._5 >  (Instant.now().get(ChronoField.YEAR) - fa.toLong)
+//                .getOrElse(slick.lifted.LiteralColumn(true))
+//              _toAge
+//                .map(ta => f._5 < ta)
+//                .getOrElse(slick.lifted.LiteralColumn(true)) &&
+                _gender
+                  .map(a => f._6 === a)
+                  .getOrElse(slick.lifted.LiteralColumn(true))
+        )
+        .map { case (_, _, _, mark, _, _) => mark }
         .avg
         .asColumnOf[Option[Double]]
         .result
-      finalQuery
     }
-
   }
 
   def getAll: Future[Seq[Visit]] = {
