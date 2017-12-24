@@ -7,6 +7,8 @@ import de.heikoseeberger.akkahttpcirce.FailFastCirceSupport
 import io.circe.{JsonNumber, JsonObject}
 import io.circe.syntax._
 
+import org.gnat.hls.utils.Utils._
+
 //GET /<entity>/<id> для получения данных о сущности
 //GET /users/<id>/visits для получения списка посещений пользователем
 //GET /locations/<id>/avg для получения средней оценки достопримечательности
@@ -89,7 +91,7 @@ trait ApiRouter extends HlsDatabase with FailFastCirceSupport {
                                      'toAge.?,
                                      'gender.?) {
                             (fromDate, toDate, fromAge, toAge, gender) =>
-                              // TODO maybe?
+                              // TODO throw 400 if not valid!
                               // validate(locationAvgParametersListValidation(fromDate, toDate, fromAge, toAge, gender), "wrong data")
                               aggregation match {
                                 // TODO add filters!
@@ -102,7 +104,13 @@ trait ApiRouter extends HlsDatabase with FailFastCirceSupport {
                                         // TODO add parsing to relevant type
                                           .getLocationMarksByIdWithFilter(
                                             parsedId,
-                                          None, None, None, None, gender)) {
+                                            optionalStringToOptionalLong(
+                                              fromDate),
+                                            optionalStringToOptionalLong(
+                                              toDate),
+                                            None,
+                                            None,
+                                            gender)) {
                                         case Some(avg) =>
                                           complete(
                                             JsonObject.fromMap(
@@ -138,12 +146,11 @@ trait ApiRouter extends HlsDatabase with FailFastCirceSupport {
   // TODO
   private def jsonBodyValidation[T] = ???
 
-  private def locationAvgParametersListValidation(filters: Option[String]*) = {
-    (List("fromDate", "toDate", "fromAge", "toAge", "gender") zip filters.toList)
-      .toMap
-      .map {
-        case (key, opt) =>
-          if (opt.isDefined) key -> opt.get else key -> "None"
-      }
-  }
+//  private def locationAvgParametersListValidation(filters: Option[String]*) = {
+//    (List("fromDate", "toDate", "fromAge", "toAge", "gender") zip filters.toList).toMap
+//      .map {
+//        case (key, opt) =>
+//          if (opt.isDefined) key -> opt.get else key -> "None"
+//      }
+//  }
 }

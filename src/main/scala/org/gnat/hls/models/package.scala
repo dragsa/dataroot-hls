@@ -4,7 +4,6 @@ import io.circe.{Decoder, Encoder, Json}
 import java.sql.Timestamp
 import java.time.{LocalDateTime, ZoneOffset}
 import io.circe.generic.semiauto.deriveEncoder
-import slick.lifted.CanBeQueryCondition
 
 package object models {
 
@@ -51,8 +50,8 @@ package object models {
   //  }
 
   // TODO does it really work properly?
-  implicit def longToTimestampConverter(l: Long) = new Timestamp(l * 1000)
-  implicit def timestampToLongConverter(ts: Timestamp) = ts.getTime / 1000
+  implicit def longToTimestampConverter(l: Long) = Timestamp.valueOf(LocalDateTime.ofEpochSecond(l, 0, ZoneOffset.UTC))
+  implicit def timestampToLongConverter(ts: Timestamp) = ts.toLocalDateTime.toEpochSecond(ZoneOffset.UTC)
 
   object User {
 

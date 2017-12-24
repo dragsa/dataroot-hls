@@ -102,12 +102,17 @@ class VisitRepository(implicit db: Database) {
         .filter(
           f =>
             _fromDate
-              .map(fd => f._3 > longToTimestampConverter(fd))
+              .map(fd => {
+//                println(longToTimestampConverter(fd))
+                f._3 > longToTimestampConverter(fd)
+              })
               .getOrElse(slick.lifted.LiteralColumn(true)) &&
               _toDate
-                .map(td => f._3 < longToTimestampConverter(td))
-                .getOrElse(slick.lifted.LiteralColumn(true))
-              &&
+                .map(td => {
+//                  println(longToTimestampConverter(td))
+                  f._3 < longToTimestampConverter(td)
+                })
+                .getOrElse(slick.lifted.LiteralColumn(true)) &&
 //              _fromAge
 //                .map(fa => f._5 >  (Instant.now().get(ChronoField.YEAR) - fa.toLong)
 //                .getOrElse(slick.lifted.LiteralColumn(true))

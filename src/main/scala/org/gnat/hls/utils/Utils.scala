@@ -2,6 +2,7 @@ package org.gnat.hls.utils
 
 import java.io.{FileInputStream, FileOutputStream}
 import java.util.zip.ZipInputStream
+import scala.util.Try
 import com.typesafe.scalalogging.LazyLogging
 
 object Utils extends LazyLogging {
@@ -9,7 +10,8 @@ object Utils extends LazyLogging {
     val t0 = System.nanoTime()
     val result = block
     val t1 = System.nanoTime()
-    logger.info(String.format("Elapsed time for %s: " + (t1 - t0) + "ns", operation))
+    logger.info(
+      String.format("Elapsed time for %s: " + (t1 - t0) + "ns", operation))
     result
   }
 
@@ -19,7 +21,18 @@ object Utils extends LazyLogging {
       logger.info("extracting " + file)
       val fout = new FileOutputStream(path + "/" + file.getName)
       val buffer = new Array[Byte](1024)
-      Stream.continually(zis.read(buffer)).takeWhile(_ != -1).foreach(fout.write(buffer, 0, _))
+      Stream
+        .continually(zis.read(buffer))
+        .takeWhile(_ != -1)
+        .foreach(fout.write(buffer, 0, _))
     }
   }
+
+  def optionalStringToOptionalLong(optStr: Option[String]) =
+    optStr.flatMap(
+      s =>
+        Try(
+          Integer
+            .parseInt(s)
+            .toLong).toOption)
 }
