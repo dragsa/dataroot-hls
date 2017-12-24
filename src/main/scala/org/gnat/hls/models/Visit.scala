@@ -2,11 +2,10 @@ package org.gnat.hls.models
 
 import java.sql.Timestamp
 import java.time._
-import java.time.temporal.ChronoField
 import slick.jdbc.PostgresProfile.api._
 import slick.lifted.Tag
 import scala.concurrent.Future
-
+import org.gnat.hls.utils.Utils._
 //case class Visit(user: Int,
 //                 location: Int,
 //                 visitedAt: Long,
@@ -113,15 +112,16 @@ class VisitRepository(implicit db: Database) {
                   f._3 < longToTimestampConverter(td)
                 })
                 .getOrElse(slick.lifted.LiteralColumn(true)) &&
-//              _fromAge
-//                .map(fa => f._5 >  (Instant.now().get(ChronoField.YEAR) - fa.toLong)
-//                .getOrElse(slick.lifted.LiteralColumn(true))
-//              _toAge
-//                .map(ta => f._5 < ta)
-//                .getOrElse(slick.lifted.LiteralColumn(true)) &&
-                _gender
-                  .map(a => f._6 === a)
-                  .getOrElse(slick.lifted.LiteralColumn(true))
+              // TODO leap years?
+              _fromAge
+                .map(fa => f._5 < timestampSubtractYears(fa))
+                .getOrElse(slick.lifted.LiteralColumn(true)) &&
+              _toAge
+                .map(ta => f._5 > timestampSubtractYears(ta))
+                .getOrElse(slick.lifted.LiteralColumn(true)) &&
+              _gender
+                .map(a => f._6 === a)
+                .getOrElse(slick.lifted.LiteralColumn(true))
         )
         .map { case (_, _, _, mark, _, _) => mark }
         .avg

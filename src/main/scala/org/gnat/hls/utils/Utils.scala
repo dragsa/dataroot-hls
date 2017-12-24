@@ -1,6 +1,8 @@
 package org.gnat.hls.utils
 
 import java.io.{FileInputStream, FileOutputStream}
+import java.sql.Timestamp
+import java.time.{Clock, LocalDateTime, ZoneOffset}
 import java.util.zip.ZipInputStream
 import scala.util.Try
 import com.typesafe.scalalogging.LazyLogging
@@ -35,4 +37,21 @@ object Utils extends LazyLogging {
           Integer
             .parseInt(s)
             .toLong).toOption)
+
+  def optionalStringToOptionalInt(optStr: Option[String]) =
+    optStr.flatMap(
+      s =>
+        Try(
+          Integer
+            .parseInt(s)).toOption)
+
+  def timestampSubtractYears(years: Int) = {
+    Timestamp.valueOf(
+      LocalDateTime.ofEpochSecond(
+        LocalDateTime
+          .now(Clock.systemUTC())
+          .toEpochSecond(ZoneOffset.UTC) - years * 31536000,
+        0,
+        ZoneOffset.UTC))
+  }
 }

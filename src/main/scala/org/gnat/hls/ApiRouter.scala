@@ -108,9 +108,11 @@ trait ApiRouter extends HlsDatabase with FailFastCirceSupport {
                                               fromDate),
                                             optionalStringToOptionalLong(
                                               toDate),
-                                            None,
-                                            None,
-                                            gender)) {
+                                            optionalStringToOptionalInt(
+                                              fromAge),
+                                            optionalStringToOptionalInt(toAge),
+                                            gender
+                                          )) {
                                         case Some(avg) =>
                                           complete(
                                             JsonObject.fromMap(
