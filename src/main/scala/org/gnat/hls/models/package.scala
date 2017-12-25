@@ -4,6 +4,7 @@ import io.circe.{Decoder, Encoder, Json}
 import java.sql.Timestamp
 import java.time.{LocalDateTime, ZoneOffset}
 import io.circe.generic.semiauto.deriveEncoder
+import io.circe.syntax._
 
 package object models {
 
@@ -33,6 +34,23 @@ package object models {
                    mark: Int,
                    id: Int)
 
+  case class VisitByUser(mark: Int, visitedAt: Timestamp, place: String)
+
+//  implicit val timestampEncoder = new Encoder[Timestamp] {
+//    final def apply(ts: Timestamp) = ts.toLocalDateTime.toEpochSecond(ZoneOffset.UTC).asJson
+//  }
+//  implicit val visitByUserEncoder: Encoder[VisitByUser] = deriveEncoder[VisitByUser]
+
+  object VisitByUser {
+    implicit val vistiByUserEncoder = new Encoder[VisitByUser] {
+      final def apply(vbu: VisitByUser): Json = Json.obj(
+        ("mark", Json.fromInt(vbu.mark)),
+        ("visited_at", Json.fromLong(vbu.visitedAt.toLocalDateTime.toEpochSecond(ZoneOffset.UTC))),
+        ("place", Json.fromString(vbu.place))
+      )
+    }
+  }
+
   // no idea how and why
   // case class MaybeFilter[X, Y, C[_]](query: slick.lifted.Query[X, Y, C]) {
   //  def filter[T,R:CanBeQueryCondition](data: Option[T])(f: T => X => R) = {
@@ -50,8 +68,10 @@ package object models {
   //  }
 
   // TODO does it really work properly?
-  implicit def longToTimestampConverter(l: Long) = Timestamp.valueOf(LocalDateTime.ofEpochSecond(l, 0, ZoneOffset.UTC))
-  implicit def timestampToLongConverter(ts: Timestamp) = ts.toLocalDateTime.toEpochSecond(ZoneOffset.UTC)
+  implicit def longToTimestampConverter(l: Long) =
+    Timestamp.valueOf(LocalDateTime.ofEpochSecond(l, 0, ZoneOffset.UTC))
+  implicit def timestampToLongConverter(ts: Timestamp) =
+    ts.toLocalDateTime.toEpochSecond(ZoneOffset.UTC)
 
   object User {
 

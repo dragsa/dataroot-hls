@@ -6,7 +6,7 @@ import akka.http.scaladsl.server.Directives._
 import de.heikoseeberger.akkahttpcirce.FailFastCirceSupport
 import io.circe.{JsonNumber, JsonObject}
 import io.circe.syntax._
-
+import org.gnat.hls.models._
 import org.gnat.hls.utils.Utils._
 
 //GET /<entity>/<id> для получения данных о сущности
@@ -68,21 +68,43 @@ trait ApiRouter extends HlsDatabase with FailFastCirceSupport {
                     get {
                       entityType match {
                         case "users" =>
-//  GET-параметры:
-//  fromDate - посещения с visited_at > fromDate
-//  toDate - посещения до visited_at < toDate
-//  country - название страны, в которой находятся интересующие достопримечательности
-//  toDistance - возвращать только те места, у которых расстояние от города меньше этого параметра
-                          aggregation match {
-                            // TODO add filters!
-                            case "visits" => {
-                              onSuccess(visitsRepository.getByUserId(parsedId)) {
-                                result =>
-                                  complete(JsonObject.fromMap(
-                                    Map("visits" -> result.asJson)))
+                          parameters('fromDate.?,
+                                     'toDate.?,
+                                     'country.?,
+                                     'toDistance.?) {
+                            (fromDate, toDate, country, toDistance) =>
+                              validate(
+                                visitsParametersListValidation(fromDate,
+                                                               toDate,
+                                                               country,
+                                                               toDistance),
+                                "wrong input data") {
+                                aggregation match {
+                                  case "visits" =>
+                                    onSuccess(usersRepository.getById(parsedId)) {
+                                      case Some(_) =>
+                                        onSuccess(visitsRepository
+                                          .getByUserIdWithFilter(
+                                            parsedId,
+                                            optStringToOptLong(fromDate),
+                                            optStringToOptLong(toDate),
+                                            country.flatMap(c =>
+                                              Option(java.net.URLDecoder
+                                                .decode(c, "UTF-8"))),
+                                            optStringToOptInt(toDistance)
+                                          )) { result =>
+                                          complete(JsonObject.fromMap(
+                                            Map("visits" -> result
+                                              .map(tup =>
+                                                VisitByUser.apply _ tupled tup)
+                                              .asJson)))
+                                        }
+                                      case None =>
+                                        complete(StatusCodes.NotFound)
+                                    }
+                                  case _ => complete(StatusCodes.NotFound)
+                                }
                               }
-                            }
-                            case _ => complete(StatusCodes.NotFound)
                           }
                         case "locations" =>
                           parameters('fromDate.?,
@@ -97,9 +119,9 @@ trait ApiRouter extends HlsDatabase with FailFastCirceSupport {
                                                                     fromAge,
                                                                     toAge,
                                                                     gender),
-                                "wrong imput data") {
+                                "wrong input data") {
                                 aggregation match {
-                                  case "avg" => {
+                                  case "avg" =>
                                     onSuccess(
                                       locationsRepository.getById(parsedId)) {
                                       case Some(_) =>
@@ -129,7 +151,6 @@ trait ApiRouter extends HlsDatabase with FailFastCirceSupport {
                                       case None =>
                                         complete(StatusCodes.NotFound)
                                     }
-                                  }
                                   case _ => complete(StatusCodes.NotFound)
                                 }
                               }
@@ -164,7 +185,29 @@ trait ApiRouter extends HlsDatabase with FailFastCirceSupport {
           case _         => Option(Failure(new Throwable("gender error")))
       })
     ).flatten.collect { case a @ Failure(_) => a }
-    println(validator)
+//    println(validator)
+    validator.isEmpty
+  }
+
+  val matchPattern = "([a-zA-Z ]+)".r
+
+  private def visitsParametersListValidation(filters: Option[String]*) = {
+    val mapOfParams =
+      (List("fromDate", "toDate", "country", "toDistance") zip filters.toList).toMap
+    val validator = List(
+      mapOfParams("fromDate").flatMap(fd =>
+        Option(Try(java.lang.Long.parseLong(fd)))),
+      mapOfParams("toDate").flatMap(td =>
+        Option(Try(java.lang.Long.parseLong(td)))),
+//      mapOfParams("country").flatMap(g =>
+//        g match {
+//          case matchPattern(d) => Option(Success(g))
+//          case _               => Option(Failure(new Throwable("country error")))
+//      }),
+      mapOfParams("toDistance").flatMap(ta =>
+        Option(Try(Integer.parseInt(ta)))),
+    ).flatten.collect { case a @ Failure(_) => a }
+//    println(validator)
     validator.isEmpty
   }
 }

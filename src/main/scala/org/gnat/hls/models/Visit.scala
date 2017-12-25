@@ -44,6 +44,7 @@ object VisitTable {
 class VisitRepository(implicit db: Database) {
   val visitTableQuery = VisitTable.table
   val userTableQuery = UserTable.table
+  val locationTableQuery = LocationTable.table
 
   def createOne(visit: Visit): Future[Visit] = {
     db.run(visitTableQuery returning visitTableQuery += visit)
@@ -65,7 +66,60 @@ class VisitRepository(implicit db: Database) {
   }
 
   def getByUserId(_userId: Int): Future[Seq[Visit]] = {
-    db.run(visitTableQuery.filter(visit => visit.user === _userId).result)
+    db.run(
+      visitTableQuery
+        .filter(visit => visit.user === _userId)
+        .sortBy(_.visitedAt)
+        .result)
+  }
+
+  def getByUserIdWithFilter(_userId: Int,
+                            _fromDate: Option[Long],
+                            _toDate: Option[Long],
+                            _country: Option[String],
+                            _toDistance: Option[Int]) = {
+    db.run {
+      (visitTableQuery join locationTableQuery on (_.location === _.id))
+        .map {
+          case (v, l) =>
+            (v.id,
+             v.user,
+             v.location,
+             v.visitedAt,
+             v.mark,
+             l.country,
+             l.distance,
+             l.place)
+        }
+        // TODO apply filter here more concise, MaybeFilter concept?
+        //  GET-параметры:
+        //  fromDate - посещения с visited_at > fromDate
+        //  toDate - посещения до visited_at < toDate
+        //  country - название страны, в которой находятся интересующие достопримечательности
+        //  toDistance - возвращать только те места, у которых расстояние от города меньше этого параметра
+        .filter(_._2 === _userId)
+        .filter(
+          f =>
+            _fromDate
+              .map(fd => f._4 > longToTimestampConverter(fd))
+              .getOrElse(slick.lifted.LiteralColumn(true)) &&
+              _toDate
+                .map(td => f._4 < longToTimestampConverter(td))
+                .getOrElse(slick.lifted.LiteralColumn(true)) &&
+              _country
+                .map(c => f._6 === c)
+                .getOrElse(slick.lifted.LiteralColumn(true)) &&
+              _toDistance
+                .map(td => f._7 < td)
+                .getOrElse(slick.lifted.LiteralColumn(true))
+        )
+        .map {
+          case (_, _, _, visitedAt, mark, _, _, place) =>
+            (mark, visitedAt, place)
+        }
+        .sortBy(_._3)
+        .result
+    }
   }
 
   def getLocationMarksById(_locationId: Int) = {

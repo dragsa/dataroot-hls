@@ -35,3 +35,8 @@ List(
     case _         => Option(Failure(new Throwable("")))
   })).flatten.collect{case Failure(a) => ()}.length
 
+val Pattern = "([f-zA-Z ]+)".r
+java.net.URLDecoder.decode("%D0%91%D1%80%D1%83%D0%BD%D0%B5%D0%B9", "UTF-8")match {
+  case c => c
+  case _ =>
+}
