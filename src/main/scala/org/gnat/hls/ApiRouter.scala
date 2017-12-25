@@ -1,8 +1,9 @@
 package org.gnat.hls
 
 import scala.util.{Failure, Success, Try}
-import akka.http.scaladsl.model.StatusCodes
+import akka.http.scaladsl.model.{HttpResponse, StatusCodes}
 import akka.http.scaladsl.server.Directives._
+import akka.http.scaladsl.server._
 import de.heikoseeberger.akkahttpcirce.FailFastCirceSupport
 import io.circe.{JsonNumber, JsonObject}
 import io.circe.syntax._
@@ -16,6 +17,16 @@ import org.gnat.hls.utils.Utils._
 //POST /<entity>/new на создание
 
 trait ApiRouter extends HlsDatabase with FailFastCirceSupport {
+
+  implicit def myRejectionHandler =
+    RejectionHandler
+      .newBuilder()
+      .handle {
+        case MalformedRequestContentRejection(msg, err) =>
+          complete(HttpResponse(StatusCodes.BadRequest))
+      }
+      .result
+
   val route =
     pathPrefix("api") {
       pathPrefix(Segment) {
@@ -23,8 +34,31 @@ trait ApiRouter extends HlsDatabase with FailFastCirceSupport {
           pathPrefix("new") {
             pathEnd {
               post {
-                // TODO call validation here
-                complete(s"POST to create $entityType")
+                handleRejections(myRejectionHandler) {
+                  entityType match {
+                    case "users" =>
+                      entity(as[User]) { user =>
+                        onComplete(usersRepository.createOne(user)) {
+                          case Success(_) => complete(JsonObject.empty)
+                          case Failure(_) => complete(StatusCodes.BadRequest)
+                        }
+                      }
+                    case "locations" =>
+                      entity(as[Location]) { location =>
+                        onComplete(locationsRepository.createOne(location)) {
+                          case Success(_) => complete(JsonObject.empty)
+                          case Failure(_) => complete(StatusCodes.BadRequest)
+                        }
+                      }
+                    case "visits" =>
+                      entity(as[Visit]) { visit =>
+                        onComplete(visitsRepository.createOne(visit)) {
+                          case Success(_) => complete(JsonObject.empty)
+                          case Failure(_) => complete(StatusCodes.BadRequest)
+                        }
+                      }
+                  }
+                }
               }
             }
           } ~ pathPrefix(Segment) { existingIdOrNew =>
@@ -165,9 +199,6 @@ trait ApiRouter extends HlsDatabase with FailFastCirceSupport {
         case _ => complete(StatusCodes.NotFound)
       }
     }
-
-  // TODO
-  private def jsonBodyValidation[T] = ???
 
   private def locationAvgParametersListValidation(filters: Option[String]*) = {
     val mapOfParams =

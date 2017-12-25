@@ -1,11 +1,11 @@
 package org.gnat.hls.models
 
 import java.sql.Timestamp
-import java.time._
 import slick.jdbc.PostgresProfile.api._
 import slick.lifted.Tag
 import scala.concurrent.Future
 import org.gnat.hls.utils.Utils._
+
 //case class Visit(user: Int,
 //                 location: Int,
 //                 visitedAt: Long,
