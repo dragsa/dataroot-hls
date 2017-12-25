@@ -1,5 +1,6 @@
 import java.sql.Timestamp
 import java.time._
+import scala.util.{Failure, Success, Try}
 
 new Timestamp(-631065600)
 new Timestamp(1387072760000L)
@@ -23,3 +24,14 @@ something
 val test = "123"
 
 1307372631
+
+Try(Integer.parseInt("f")).toEither
+
+List(
+  Option("1g2").flatMap(td =>
+    Option(Try(Integer.parseInt(td).toLong))),
+  Option("h").flatMap(g => g match {
+    case "m" | "f" => Option(Success(g))
+    case _         => Option(Failure(new Throwable("")))
+  })).flatten.collect{case Failure(a) => ()}.length
+

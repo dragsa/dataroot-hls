@@ -101,16 +101,10 @@ class VisitRepository(implicit db: Database) {
         .filter(
           f =>
             _fromDate
-              .map(fd => {
-//                println(longToTimestampConverter(fd))
-                f._3 > longToTimestampConverter(fd)
-              })
+              .map(fd => f._3 > longToTimestampConverter(fd))
               .getOrElse(slick.lifted.LiteralColumn(true)) &&
               _toDate
-                .map(td => {
-//                  println(longToTimestampConverter(td))
-                  f._3 < longToTimestampConverter(td)
-                })
+                .map(td => f._3 < longToTimestampConverter(td))
                 .getOrElse(slick.lifted.LiteralColumn(true)) &&
               // TODO leap years?
               _fromAge

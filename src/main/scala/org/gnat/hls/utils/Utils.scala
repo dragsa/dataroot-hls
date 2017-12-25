@@ -30,7 +30,7 @@ object Utils extends LazyLogging {
     }
   }
 
-  def optionalStringToOptionalLong(optStr: Option[String]) =
+  def optStringToOptLong(optStr: Option[String]) =
     optStr.flatMap(
       s =>
         Try(
@@ -38,7 +38,7 @@ object Utils extends LazyLogging {
             .parseInt(s)
             .toLong).toOption)
 
-  def optionalStringToOptionalInt(optStr: Option[String]) =
+  def optStringToOptInt(optStr: Option[String]) =
     optStr.flatMap(
       s =>
         Try(
@@ -54,4 +54,10 @@ object Utils extends LazyLogging {
         0,
         ZoneOffset.UTC))
   }
+
+//  def leapYearsCounter(ts: Timestamp) = {
+//    val cal = Calendar.getInstance()
+//    cal.setTimeInMillis(LocalDateTime.now(Clock.systemUTC()).toEpochSecond(ZoneOffset.UTC))
+//    cal.get(Calendar.YEAR)
+//  }
 }

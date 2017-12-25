@@ -91,47 +91,47 @@ trait ApiRouter extends HlsDatabase with FailFastCirceSupport {
                                      'toAge.?,
                                      'gender.?) {
                             (fromDate, toDate, fromAge, toAge, gender) =>
-                              // TODO throw 400 if not valid!
-                              // validate(locationAvgParametersListValidation(fromDate, toDate, fromAge, toAge, gender), "wrong data")
-                              aggregation match {
-                                // TODO add filters!
-                                case "avg" => {
-                                  onSuccess(
-                                    locationsRepository.getById(parsedId)) {
-                                    case Some(_) =>
-                                      onSuccess(
-                                        visitsRepository
-                                        // TODO add parsing to relevant type
-                                          .getLocationMarksByIdWithFilter(
-                                            parsedId,
-                                            optionalStringToOptionalLong(
-                                              fromDate),
-                                            optionalStringToOptionalLong(
-                                              toDate),
-                                            optionalStringToOptionalInt(
-                                              fromAge),
-                                            optionalStringToOptionalInt(toAge),
-                                            gender
-                                          )) {
-                                        case Some(avg) =>
-                                          complete(
-                                            JsonObject.fromMap(
-                                              Map("avg" -> JsonNumber
-                                                .fromDecimalStringUnsafe(
-                                                  "%.5f".format(avg))
-                                                .asJson)))
-                                        case None =>
-                                          complete(
-                                            JsonObject.fromMap(
+                              validate(
+                                locationAvgParametersListValidation(fromDate,
+                                                                    toDate,
+                                                                    fromAge,
+                                                                    toAge,
+                                                                    gender),
+                                "wrong imput data") {
+                                aggregation match {
+                                  case "avg" => {
+                                    onSuccess(
+                                      locationsRepository.getById(parsedId)) {
+                                      case Some(_) =>
+                                        onSuccess(
+                                          visitsRepository
+                                            .getLocationMarksByIdWithFilter(
+                                              parsedId,
+                                              optStringToOptLong(fromDate),
+                                              optStringToOptLong(toDate),
+                                              optStringToOptInt(fromAge),
+                                              optStringToOptInt(toAge),
+                                              gender
+                                            )) {
+                                          case Some(avg) =>
+                                            complete(
+                                              JsonObject.fromMap(
+                                                Map("avg" -> JsonNumber
+                                                  .fromDecimalStringUnsafe(
+                                                    "%.5f".format(avg))
+                                                  .asJson)))
+                                          case None =>
+                                            complete(JsonObject.fromMap(
                                               Map("avg" -> JsonNumber
                                                 .fromDecimalStringUnsafe("0.0")
                                                 .asJson)))
-                                      }
-                                    case None =>
-                                      complete(StatusCodes.NotFound)
+                                        }
+                                      case None =>
+                                        complete(StatusCodes.NotFound)
+                                    }
                                   }
+                                  case _ => complete(StatusCodes.NotFound)
                                 }
-                                case _ => complete(StatusCodes.NotFound)
                               }
                           }
                       }
@@ -148,11 +148,23 @@ trait ApiRouter extends HlsDatabase with FailFastCirceSupport {
   // TODO
   private def jsonBodyValidation[T] = ???
 
-//  private def locationAvgParametersListValidation(filters: Option[String]*) = {
-//    (List("fromDate", "toDate", "fromAge", "toAge", "gender") zip filters.toList).toMap
-//      .map {
-//        case (key, opt) =>
-//          if (opt.isDefined) key -> opt.get else key -> "None"
-//      }
-//  }
+  private def locationAvgParametersListValidation(filters: Option[String]*) = {
+    val mapOfParams =
+      (List("fromDate", "toDate", "fromAge", "toAge", "gender") zip filters.toList).toMap
+    val validator = List(
+      mapOfParams("fromDate").flatMap(fd =>
+        Option(Try(java.lang.Long.parseLong(fd)))),
+      mapOfParams("toDate").flatMap(td =>
+        Option(Try(java.lang.Long.parseLong(td)))),
+      mapOfParams("fromAge").flatMap(fa => Option(Try(Integer.parseInt(fa)))),
+      mapOfParams("toAge").flatMap(ta => Option(Try(Integer.parseInt(ta)))),
+      mapOfParams("gender").flatMap(g =>
+        g match {
+          case "m" | "f" => Option(Success(g))
+          case _         => Option(Failure(new Throwable("gender error")))
+      })
+    ).flatten.collect { case a @ Failure(_) => a }
+    println(validator)
+    validator.isEmpty
+  }
 }
