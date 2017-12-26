@@ -28,7 +28,9 @@ trait ApiRouter extends HlsDatabase with FailFastCirceSupport {
       .result
 
   val route =
-    pathPrefix("api") {
+    pathSingleSlash {
+      complete("root")
+    } ~ {
       pathPrefix(Segment) {
         case entityType @ ("users" | "locations" | "visits") =>
           pathPrefix("new") {
