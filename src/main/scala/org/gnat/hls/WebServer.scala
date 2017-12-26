@@ -12,9 +12,9 @@ object WebServer extends App with ApiRouter with LazyLogging {
   implicit val materializer = ActorMaterializer()
   implicit val executionContext = system.dispatcher
 
-  val bindingFuture = Http().bindAndHandle(route, "0.0.0.0", 8080)
+  val bindingFuture = Http().bindAndHandle(route, "0.0.0.0", 80)
 
-//  initDatabase
+  initDatabase
 
   logger.info("Started server, press enter to stop")
   StdIn.readLine()
