@@ -117,7 +117,7 @@ class VisitRepository(implicit db: Database) {
           case (_, _, _, visitedAt, mark, _, _, place) =>
             (mark, visitedAt, place)
         }
-        .sortBy(_._3)
+        .sortBy(_._2)
         .result
     }
   }

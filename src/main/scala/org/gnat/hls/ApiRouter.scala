@@ -23,7 +23,7 @@ trait ApiRouter extends HlsDatabase with FailFastCirceSupport {
       .newBuilder()
       .handle {
         case MalformedRequestContentRejection(msg, err) =>
-          complete(HttpResponse(StatusCodes.BadRequest))
+          complete(StatusCodes.BadRequest, "wrong input data")
       }
       .result
 
@@ -73,8 +73,31 @@ trait ApiRouter extends HlsDatabase with FailFastCirceSupport {
                           case None    => complete(StatusCodes.NotFound)
                         }
                       } ~ post {
-                        // TODO
-                        complete(s"POST to update $entityType")
+                        entity(as[UserUpdate]) { uDiff =>
+                          onSuccess(usersRepository.getById(parsedId)) {
+//                            case class User(firstName: String,
+//                             lastName: String,
+//                             birthDate: Timestamp,
+//                             gender: String,
+//                             email: String,
+//                             id: Int)
+                            case Some(uCurr) =>
+                              val newUser = uCurr.copy(
+                                uDiff.firstName.getOrElse(uCurr.firstName),
+                                uDiff.lastName.getOrElse(uCurr.lastName),
+                                uDiff.birthDate.getOrElse(uCurr.birthDate),
+                                uDiff.gender.getOrElse(uCurr.gender),
+                                uDiff.email.getOrElse(uCurr.email)
+                              )
+                              onSuccess(usersRepository.updateOne(newUser)) {
+                                case 1 =>
+                                  println(newUser + " updated")
+                                  complete(JsonObject.empty)
+                                case 0 => complete(StatusCodes.BadRequest)
+                              }
+                            case None => complete(StatusCodes.NotFound)
+                          }
+                        }
                       }
                     case "locations" =>
                       get {
@@ -83,8 +106,30 @@ trait ApiRouter extends HlsDatabase with FailFastCirceSupport {
                           case None    => complete(StatusCodes.NotFound)
                         }
                       } ~ post {
-                        // TODO
-                        complete(s"POST to update $entityType")
+                        entity(as[LocationUpdate]) { lDiff =>
+                          onSuccess(locationsRepository.getById(parsedId)) {
+//                            case class Location(distance: Int,
+//                             city: String,
+//                             place: String,
+//                             country: String,
+//                             id: Int)
+                            case Some(lCurr) =>
+                              val newLocation = lCurr.copy(
+                                lDiff.distance.getOrElse(lCurr.distance),
+                                lDiff.place.getOrElse(lCurr.place),
+                                lDiff.city.getOrElse(lCurr.city),
+                                lDiff.country.getOrElse(lCurr.country)
+                              )
+                              onSuccess(
+                                locationsRepository.updateOne(newLocation)) {
+                                case 1 =>
+                                  println(newLocation + " updated")
+                                  complete(JsonObject.empty)
+                                case 0 => complete(StatusCodes.BadRequest)
+                              }
+                            case None => complete(StatusCodes.NotFound)
+                          }
+                        }
                       }
                     case "visits" =>
                       get {
@@ -93,8 +138,29 @@ trait ApiRouter extends HlsDatabase with FailFastCirceSupport {
                           case None    => complete(StatusCodes.NotFound)
                         }
                       } ~ post {
-                        // TODO
-                        complete(s"POST to update $entityType")
+                        entity(as[VisitUpdate]) { vDiff =>
+                          onSuccess(visitsRepository.getById(parsedId)) {
+//                           case class Visit(user: Int,
+//                            location: Int,
+//                            visitedAt: Timestamp,
+//                            mark: Int,
+//                            id: Int)
+                            case Some(vCurr) =>
+                              val newVisit = vCurr.copy(
+                                vDiff.user.getOrElse(vCurr.user),
+                                vDiff.location.getOrElse(vCurr.location),
+                                vDiff.visitedAt.getOrElse(vCurr.visitedAt),
+                                vDiff.mark.getOrElse(vCurr.mark)
+                              )
+                              onSuccess(visitsRepository.updateOne(newVisit)) {
+                                case 1 =>
+                                  println(newVisit + " updated")
+                                  complete(JsonObject.empty)
+                                case 0 => complete(StatusCodes.BadRequest)
+                              }
+                            case None => complete(StatusCodes.NotFound)
+                          }
+                        }
                       }
                   }
                 } ~ pathPrefix(Segment) { aggregation =>
