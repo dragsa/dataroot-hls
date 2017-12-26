@@ -12,7 +12,7 @@ RUN apt-get update && \
     rm -rf /var/cache/oracle-jdk8-installer && \
     ## compiler and libs
     apt-get update && \
-    apt-get install -y git build-essential libreadline-dev zlib1g-dev && \
+    apt-get install -y build-essential libreadline-dev zlib1g-dev sudo lsof && \
     mkdir -p /temp/postgres_9.6/sources && \
     apt-get update && \
     ## unicode support
@@ -21,7 +21,8 @@ RUN apt-get update && \
 ENV JAVA_HOME /usr/lib/jvm/java-8-oracle
 ENV LANG en_US.utf8
 
-RUN groupadd -r postgres --gid=999 && useradd -r -g postgres --uid=999 postgres
+RUN groupadd -r postgres --gid=999 && useradd -r -g postgres --uid=999 postgres && usermod -aG sudo postgres && \
+    echo "postgres ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers
 
 ADD https://ftp.postgresql.org/pub/source/v9.6.6/postgresql-9.6.6.tar.gz /temp/postgres_9.6/sources
 RUN cd /temp/postgres_9.6/sources && gunzip postgresql-9.6.6.tar.gz && tar xf postgresql-9.6.6.tar && \
@@ -48,7 +49,7 @@ RUN echo "host all  all    0.0.0.0/0  md5" >> /usr/local/pgsql/data/pg_hba.conf
 RUN echo "listen_addresses='*'" >> /usr/local/pgsql/data/postgresql.conf
 
 VOLUME /usr/local/pgsql/data/volume
-EXPOSE 5432
+EXPOSE 5432 80
 
 RUN /init.sh
 

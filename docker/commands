@@ -1,4 +1,6 @@
 docker build -t dragsasgard/postgres_96_with_hls .
 docker run -d --net qvantel -p 5432:5432 -v /Users/dragsa/Documents/IdeaProjects/dataroot-hls-data/:/tmp/data --name hls_gnat dragsasgard/postgres_96_with_hls
+docker run -d --net qvantel -p 5432:5432 -p 80:80 -v /Users/dragsa/Documents/IdeaProjects/dataroot-hls-data/:/tmp/data --name hls_gnat dragsasgard/postgres_96_with_hls
+docker run -it --net qvantel -p 5432:5432 -p 80:80 -v /Users/dragsa/Documents/IdeaProjects/dataroot-hls-data/:/tmp/data --name hls_gnat dragsasgard/postgres_96_with_hls
 docker run -d --net qvantel -p 5432:5432 --name pg_gnat dragsasgard/postgres_96
 docker run -d -v /Users/dragsa/Documents/IdeaProjects/dataroot-hls-data/:/tmp/data --name hls dragsasgard/postgres_96_with_hls

@@ -14,7 +14,7 @@ until psql -h localhost -U "postgres" -c '\q'; do
 done
 
 # Start the second process
-java -jar /app/dataroot-hls-assembly-0.1.jar
+sudo java -jar /app/dataroot-hls-assembly-0.1.jar
 status=$?
 if [ $status -ne 0 ]; then
   echo "Failed to start gnat-hls: $status"
