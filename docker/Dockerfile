@@ -12,7 +12,7 @@ RUN apt-get update && \
     rm -rf /var/cache/oracle-jdk8-installer && \
     ## compiler and libs
     apt-get update && \
-    apt-get install -y build-essential libreadline-dev zlib1g-dev sudo lsof && \
+    apt-get install -y build-essential libreadline-dev zlib1g-dev sudo lsof net-tools && \
     mkdir -p /temp/postgres_9.6/sources && \
     apt-get update && \
     ## unicode support
@@ -49,7 +49,7 @@ RUN echo "host all  all    0.0.0.0/0  md5" >> /usr/local/pgsql/data/pg_hba.conf
 RUN echo "listen_addresses='*'" >> /usr/local/pgsql/data/postgresql.conf
 
 VOLUME /usr/local/pgsql/data/volume
-EXPOSE 5432 80
+EXPOSE 80
 
 RUN /init.sh
 
